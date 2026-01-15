@@ -1,0 +1,12 @@
+name: Greeting Workflow
+
+# This determines when the action runs. 
+# 'workflow_dispatch' allows you to trigger it manually from the Actions tab.
+on: [push, workflow_dispatch]
+
+jobs:
+  say-hello:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run a greeting script
+        run: echo "hello shahram this is your first github action workflow"
