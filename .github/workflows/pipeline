@@ -1,61 +1,32 @@
----
-resource_types:
+name: Compile and Run Unit Tests
 
-- name: pull-request
-  type: docker-image
-  source:
-    repository: teliaoss/github-pr-resource
-
-resources:
-- name: maven-examples
-  type: pull-request
-  check_every: 10s
-  source:
-    repository: preksha95/maven-examples
-    access_token: ((github-access-token))
-
-
+# This triggers the workflow on any Pull Request to the main branch
+on:
+  pull_request:
+    branches:
+      - main
+      - master
+  workflow_dispatch: # Allows you to run it manually for testing
 
 jobs:
-- name: compile-run-unittest
-  plan:
-  - get: maven-examples
-    trigger: true
-    version: every
-  - put: maven-examples
-    params:
-      path: maven-examples
-      status: pending
-  - task: build
-    config:
-      platform: linux
-      image_resource:
-        type: docker-image
-        source:
-          repository: maven
-          tag: 3.6.3-jdk-11
-      inputs:
-      - name: maven-examples
-      outputs:
-      - name: build_out
-      params:
-        branch: master
-      run:
-       path: bash
-       args:
-       - -exec
-       - |
-          cd maven-examples/maven-unit-test/
+  compile-run-unittest:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Check out the code from the Pull Request
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Set up Java and Maven (equivalent to the maven:3.6.3-jdk-11 image)
+      - name: Set up JDK 11
+        uses: actions/setup-java@v3
+        with:
+          java-version: '11'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      # 3. Run the Maven build (equivalent to your 'task: build')
+      - name: Build with Maven
+        run: |
+          cd maven-unit-test/
           mvn clean install
-  on_success:
-    do:
-    - put: maven-examples
-      params:
-        path: maven-examples
-        status: success
-  on_failure:
-    do:
-    - put: maven-examples
-      params:
-        path: maven-examples
-        status: failure
